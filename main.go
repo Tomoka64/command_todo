@@ -18,16 +18,6 @@ import (
 var T = flag.String("t", "clean up my room", "put your todo-list")
 var D = flag.String("d", "3000-00-00", "set up a deadline for your todo (format-3000-00-00)")
 
-type Todo struct {
-	Isbn  int    `json:"isbn"`
-	Title string `json:"title"`
-
-	DeadLine    string `json:"deadline"`
-	TimeCreated time.Time
-}
-
-type Todos []Todo
-
 func main() {
 	switch os.Args[1] {
 	case "history":
@@ -77,7 +67,7 @@ func Update() {
 		if intDate[0] <= timestr[0] {
 			if intDate[1] <= timestr[1] {
 				if intDate[2] <= timestr[2] {
-					color.Red("delete: %v, %v", intDate, timestr)
+					color.Red("deleted: %v, %v", intDate, timestr)
 					ret = append(ret[:i], Datas[i+1:]...)
 				}
 			}
