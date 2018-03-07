@@ -19,6 +19,10 @@ var T = flag.String("t", "clean up my room", "put your todo-list")
 var D = flag.String("d", "3000-00-00", "set up a deadline for your todo (format-3000-00-00)")
 
 func main() {
+	if len(os.Args) < 2 {
+		fmt.Fprintf(os.Stderr, "<usage> %s <flag option> -t -d\n<usage2> %s update\n<usage2> %s history\n", os.Args[0], os.Args[0], os.Args[0])
+		os.Exit(1)
+	}
 	switch os.Args[1] {
 	case "history":
 		_ = History()
