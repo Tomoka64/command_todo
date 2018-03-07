@@ -9,11 +9,12 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
-
-	"github.com/fatih/color"
 )
+
+const filename = "config/data.json"
 
 var T = flag.String("t", "clean up my room", "put your todo-list")
 var D = flag.String("d", "3000-00-00", "set up a deadline for your todo (format-3000-00-00)")
@@ -26,10 +27,8 @@ func main() {
 	switch os.Args[1] {
 	case "history":
 		_ = History()
-		break
 	case "update":
 		Update()
-		break
 	default:
 		HandleDef()
 	}
@@ -60,7 +59,7 @@ func Update() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	var ret []Todo
+	var ret Todos
 	for i := 0; i < len(Datas); i++ {
 
 		day := time.Now()
@@ -68,20 +67,44 @@ func Update() {
 		time := day.Format(layout)
 		intDate := strings.Split(Datas[i].DeadLine, "-")
 		timestr := strings.Split(time, "-")
-		if intDate[0] <= timestr[0] {
-			if intDate[1] <= timestr[1] {
-				if intDate[2] <= timestr[2] {
-					color.Red("deleted: %v, %v", intDate, timestr)
-					ret = append(ret[:i], Datas[i+1:]...)
+		fmt.Println(intDate, timestr)
+		if !Compare(intDate[0], timestr[0]) {
+			if !Compare(intDate[1], timestr[1]) {
+				if !Compare(intDate[2], timestr[2]) {
+					ret = append(ret, Datas[i])
+					fmt.Println(ret)
+					for _, data := range ret {
+						bs := ToJson(data)
+						_ = ioutil.WriteFile(filename, bs, 0644)
+					}
 				}
 			}
 		}
-	}
-	for _, data := range ret {
-		bs := ToJson(data)
-		_ = ioutil.WriteFile(filename, bs, 0644)
-	}
 
+	}
+}
+
+func updateFile(b []byte) {
+	f, err := os.Open(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	f.Write(b)
+}
+
+func Compare(s string, x string) bool {
+	if intfy(s) > intfy(x) {
+		return false
+	}
+	return true
+}
+
+func intfy(s string) int {
+	a, err := strconv.Atoi(s)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return a
 }
 
 func ToJson(s interface{}) []byte {
@@ -91,8 +114,6 @@ func ToJson(s interface{}) []byte {
 	}
 	return data
 }
-
-const filename = "config/data.json"
 
 func SaveToFile(bs []byte) {
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0600)
