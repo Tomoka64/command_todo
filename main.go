@@ -9,12 +9,13 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"strconv"
-	"strings"
 	"time"
+
+	"github.com/fatih/color"
 )
 
 const filename = "config/data.json"
+const layout = "2006-01-02"
 
 var T = flag.String("t", "clean up my room", "put your todo-list")
 var D = flag.String("d", "3000-00-00", "set up a deadline for your todo (format-3000-00-00)")
@@ -54,6 +55,9 @@ func HandleDef() {
 	SaveToFile(bs)
 }
 
+type Time struct {
+}
+
 func Update() {
 	Datas, err := getAllFromFile()
 	if err != nil {
@@ -63,48 +67,17 @@ func Update() {
 	for i := 0; i < len(Datas); i++ {
 
 		day := time.Now()
-		const layout = "2006-01-02"
-		time := day.Format(layout)
-		intDate := strings.Split(Datas[i].DeadLine, "-")
-		timestr := strings.Split(time, "-")
-		fmt.Println(intDate, timestr)
-		if !Compare(intDate[0], timestr[0]) {
-			if !Compare(intDate[1], timestr[1]) {
-				if !Compare(intDate[2], timestr[2]) {
-					ret = append(ret, Datas[i])
-					fmt.Println(ret)
-					for _, data := range ret {
-						bs := ToJson(data)
-						_ = ioutil.WriteFile(filename, bs, 0644)
-					}
-				}
+		t, _ := time.Parse(layout, Datas[i].DeadLine)
+		if !day.After(t) {
+			ret = append(ret, Datas[i])
+			for _, data := range ret {
+				bs := ToJson(data)
+				_ = ioutil.WriteFile(filename, bs, 0644)
 			}
+		} else if day.After(t) {
+			color.Red("deleted: %v | %v", Datas[i].Title, Datas[i].DeadLine)
 		}
-
 	}
-}
-
-func updateFile(b []byte) {
-	f, err := os.Open(filename)
-	if err != nil {
-		log.Fatal(err)
-	}
-	f.Write(b)
-}
-
-func Compare(s string, x string) bool {
-	if intfy(s) > intfy(x) {
-		return false
-	}
-	return true
-}
-
-func intfy(s string) int {
-	a, err := strconv.Atoi(s)
-	if err != nil {
-		fmt.Println(err)
-	}
-	return a
 }
 
 func ToJson(s interface{}) []byte {
